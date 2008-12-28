@@ -1,0 +1,52 @@
+#!/usr/bin/perl
+use strict;
+use vars qw($VERSION);
+use Getopt::Std::Strict 'dhv';
+use LEOCHARRE::Dir ':all';
+use LEOCHARRE::DEBUG;
+use Cwd;
+use Carp;
+use lib './lib';
+use File::Trash;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.1.1 $ =~ /(\d+)/g;
+
+init();
+
+for (@ARGV){
+   my $trashed = File::Trash::trash($_);
+   debug("trashed $_ to $trashed");
+}
+
+
+
+exit;
+
+
+
+sub usage {
+   qq{$0 - send files to trash
+
+OPTIONS
+
+   -d       debug on
+   -h       help
+   -v       version and exit
+
+
+AUTHOR
+
+Leo Charre leocharre at cpan dot org
+
+SEE ALSO
+File::Trash  - parent package.
+
+}}
+
+sub init {
+   $::DEBUG = 1 if $opt_d;
+   $opt_h and print usage() and exit;
+   $opt_v and print $VERSION and exit;
+
+}
+
+

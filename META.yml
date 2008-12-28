@@ -1,12 +1,21 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         File-Trash
-version:      v0.0.1
-version_from: lib/File/Trash.pm
-installdirs:  site
-requires:
-    Test::More:                    0
-    version:                       0
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.17
+--- #YAML:1.0
+name:                File-Trash
+version:             1.01
+abstract:            ~
+license:             perl
+author:              ~
+generated_by:        ExtUtils::MakeMaker version 6.44
+distribution_type:   module
+requires:     
+    Carp:                          1
+    Cwd:                           3
+    Exporter:                      5
+    File::Copy:                    2.09
+    File::Path:                    1.08
+    Getopt::Std::Strict:           1.01
+    LEOCHARRE::DEBUG:              1.11
+    LEOCHARRE::Dir:                1.06
+    Test::Simple:                  0
+meta-spec:
+    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
+    version: 1.3

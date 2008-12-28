@@ -1,17 +1,26 @@
-use strict;
-use warnings;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-    NAME                => 'File::Trash',
-    AUTHOR              => 'Daniel Muey <http://drmuey.com/cpan_contact.pl>',
-    VERSION_FROM        => 'lib/File/Trash.pm',
-    ABSTRACT_FROM       => 'lib/File/Trash.pm',
-    PL_FILES            => {},
-    PREREQ_PM => {
-        'Test::More' => 0,
-        'version'    => 0,
-    },
-    dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean               => { FILES => 'File-Trash-*' },
+   NAME => 'File::Trash',
+   VERSION_FROM => 'lib/File/Trash.pm',
+   
+   LICENSE => 'perl',
+
+   # gen /usr/bin/pmused by Sun Dec 28 18:42:33 EST 2008 
+   PREREQ_PM => {
+      'Carp'                              => '1',
+      'Cwd'                               => '3',
+      'Exporter'                          => '5',
+      'File::Copy'                        => '2.09',
+      'File::Path'                        => '1.08',
+      'Getopt::Std::Strict'               => '1.01',
+      'LEOCHARRE::DEBUG'                  => '1.11',
+      'LEOCHARRE::Dir'                    => '1.06',
+      'Test::Simple'                      => '0',
+   },
+
+
+   EXE_FILES => [qw(bin/trash)],
 );
+
+

@@ -1,177 +1,170 @@
 package File::Trash;
-
-use warnings;
 use strict;
+use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS @ISA $DEBUG $ABS_TRASH);
+use Exporter;
 use Carp;
+use File::Copy;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.1.1 $ =~ /(\d+)/g;
+@ISA = qw/Exporter/;
+@EXPORT_OK = qw(trash);
+%EXPORT_TAGS = ( all => \@EXPORT_OK );
+use File::Path;
+use Carp;
+sub debug { $DEBUG and print STDERR __PACKAGE__.", @_\n"; 1 }
 
-use version; our $VERSION = qv('0.0.1');
+$ABS_TRASH = '/tmp/trash';
 
-1; 
+sub trash {
+   @_ or carp("no arguments provided") and return;
+   my $count = scalar @_;
+   $count or carp("no arguments provided") and return;
+
+   $count == 1 and return _trash($_[0]);
+   
+   my $_count = 0;
+   for (@_){
+      _trash($_) or next;
+
+      $_count++;
+   }
+
+   $_count == $count or carp("Deleted $_count/$count files.");
+
+   $_count;
+}
+
+
+sub _trash {   
+   my $abs_path = Cwd::abs_path($_[0]) 
+         or carp("Can't resolve with Cwd::abs_path : '$_[0]'")
+         and return;
+      -f $abs_path
+         or carp("Not a file on disk : '$abs_path'")
+         and return;
+
+   my $abs_trashed = "$ABS_TRASH$abs_path";
+   $abs_trashed =~/^(\/.+)\/[^\/]+$/ 
+      or confess("Error with '$abs_trashed' matching into");
+   _abs_dir_assure($1);
+
+   my $backnum;
+   no warnings;
+   while( -e $abs_trashed ){
+      $abs_trashed=~s/\.\d+$//;
+      $abs_trashed.='.'.$backnum++;
+   }
+
+
+   File::Copy::move($abs_path, $abs_trashed) 
+      or confess("cant File::Copy::move($abs_path, $abs_trashed) , $!");
+   debug("moved '$abs_path' to '$abs_trashed'");
+   $abs_trashed;
+}
+
+
+   
+
+
+
+sub _abs_dir_assure {
+   -d $_[0] or File::Path::mkpath($_[0]) # throws croak on system error
+      or die("cant File::Path::mkpath $_[0], $!"); # just in case
+   1;
+}
+
+
+
+
+
+
+
+
+1;
 
 __END__
 
+=pod
+
 =head1 NAME
 
-File::Trash - Restore files and directories that have been deleted
-
-
-=head1 VERSION
-
-This document describes File::Trash version 0.0.1
-Currently it is simply a placeholder until it is complete.
+File::Trash - safe file delete
 
 =head1 SYNOPSIS
 
-    use File::Trash;
+   use File::Trash 'trash';
 
-=for author to fill in:
-    Brief code example(s) here showing commonest usage(s).
-    This section will be as far as many users bother reading
-    so make it as educational and exeplary as possible.
-  
-  
+   my $trashed_path = trash('~/this_is_boring.txt');
+   # returns '/tmp/trash/home/username/this_is_boring.txt'
+
+   my $abs_trash = $File::Trash::ABS_TRASH;
+   # returns '/tmp/trash' by default
+
+   my $trash_count = trash('~/this_is_boring.txt', '~/this_is_boring_2.txt');
+   # returns '2'
+
 =head1 DESCRIPTION
 
-=for author to fill in:
-    Write a full description of the module and its features here.
-    Use subsections (=head2, =head3) as appropriate.
+File::Remove apparently does something similar. 
+I don't see example for using File::Remove in a simple manner alike unlink().
+Thus, here it is. 
 
+=head2 The default abs trash dir
 
-=head1 INTERFACE 
+The default dir for trash has been chosen as /tmp/trash.
+The other common sense place would be $ENV{HOME}/.trash, so, why not?
+What if you are calling this from some script running under a used who does not have ~, like, maybe cron
+or maybe from some cgi? This is safer.
+If you want, you can set the dir to be something else..
 
-=for author to fill in:
-    Write a separate section listing the public components of the modules
-    interface. These normally consist of either subroutines that may be
-    exported, or methods that may be called on objects belonging to the
-    classes provided by the module.
+   $File::Trash::ABS_TRASH = $ENV{HOME}/.trash
 
+=head1 API
 
-=head1 DIAGNOSTICS
+No subs are exported by default.
 
-=for author to fill in:
-    List every single error and warning message that the module can
-    generate (even the ones that will "never happen"), with a full
-    explanation of each problem, one or more likely causes, and any
-    suggested remedies.
+=head2 trash()
 
-=over
+Ideally this should behave as unlink(). It does not at present.
 
-=item C<< Error message here, perhaps with %s placeholders >>
+Argument is a list of paths to files to delete.
+If more than one file is provided, returns number of files deleted.
+If one file is provided only, returns abs path to where the file moved.
+Returns undef in failure, check errors in $File::Trash::errstr.
 
-[Description of error here]
+If the trash destination exists, the file is appended with a dot digit number.
+So, this really makes sure you don't lose junk.
 
-=item C<< Another error message here >>
+=head2 $File::Trash::ABS_TRASH
 
-[Description of error here]
+Default is /tmp/trash
 
-[Et cetera, et cetera]
+=head2 $File::Trash::DEBUG
 
-=back
+Set to true to see some debug info.
 
-=head1 LOCALIZATION
+=head1 CAVEATS
 
-This module uses L<Locale::Maketext::Pseudo> as a default if nothing else is 
-specified to support localization in harmony with the apps using it.
+In development. Works great as far as I know.
+This is mean to be POSIX compliant only. That means no windoze support is provided.
+If you have suggestions, please forward to AUTHOR.
 
-See "DESCRIPTION" at L<Locale::Maketext::Pseudo> for more info on why this is 
-good and why you should use this module's language object support at best and, 
-at worst, appreciate it being there for when you will want it later.
+=head1 SEE ALSO
 
-=for author to add where it needs to go (E.g. new()'s doc):
-
-    =item lang_obj
-
-    A language object that can() maketext(), see "LOCALIZATION" below and L<Locale::Maketext::Pseudo>
-
-    =item localization  
-   
-    Tip: set $ENV{'maketext_obj'} to an object that can() maketext(), see "LOCALIZATION" below and L<Locale::Maketext::Pseudo>
-
-=head1 CONFIGURATION AND ENVIRONMENT
-
-=for author to fill in:
-    A full explanation of any configuration system(s) used by the
-    module, including the names and locations of any configuration
-    files, and the meaning of any environment variables or properties
-    that can be set. These descriptions must also include details of any
-    configuration language used.
-  
-File::Trash requires no configuration files or environment variables.
-
-
-=head1 DEPENDENCIES
-
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
-
-None.
-
-
-=head1 INCOMPATIBILITIES
-
-=for author to fill in:
-    A list of any modules that this module cannot be used in conjunction
-    with. This may be due to name conflicts in the interface, or
-    competition for system or program resources, or due to internal
-    limitations of Perl (for example, many modules that use source code
-    filters are mutually incompatible).
-
-None reported.
-
-
-=head1 BUGS AND LIMITATIONS
-
-=for author to fill in:
-    A list of known problems with the module, together with some
-    indication Whether they are likely to be fixed in an upcoming
-    release. Also a list of restrictions on the features the module
-    does provide: data types that cannot be handled, performance issues
-    and the circumstances in which they may arise, practical
-    limitations on the size of data sets, special cases that are not
-    (yet) handled, etc.
-
-No bugs have been reported.
-
-Please report any bugs or feature requests to
-C<bug-file-trash@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.
-
+L<File::Remove>
 
 =head1 AUTHOR
 
-Daniel Muey  C<< <http://drmuey.com/cpan_contact.pl> >>
+Leo Charre leocharre at cpan dot org
 
+=head1 LICENSE
 
-=head1 LICENCE AND COPYRIGHT
+This package is free software; you can redistribute it and/or modify it under the same terms as Perl itself, i.e., under the terms of the "Artistic License" or the "GNU General Public License".
 
-Copyright (c) 2007, Daniel Muey C<< <http://drmuey.com/cpan_contact.pl> >>. All rights reserved.
+=head1 DISCLAIMER
 
-This module is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself. See L<perlartistic>.
+This package is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
+See the "GNU General Public License" for more details.
 
-=head1 DISCLAIMER OF WARRANTY
+=cut
 
-BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
-ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
-YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.
-
-IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
-OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
-RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
-FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
