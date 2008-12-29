@@ -1,13 +1,14 @@
 use Test::Simple 'no_plan';
 use strict;
 use lib './lib';
-use File::Trash 'trash';
+use File::Trash ':all';
 use Cwd;
 use vars qw($_part $cwd);
 $cwd = cwd();
 $File::Trash::DEBUG =1;
 
 $File::Trash::ABS_TRASH = $cwd.'/t/trash';
+$File::Trash::ABS_BACKUP = $cwd.'/t/backup';
 
 my @files = qw(./t/a.tmp t/b.tmp t/c.tmp);
 
@@ -53,6 +54,32 @@ for my $rel (@files){
    my $c = $1;
    ok($c, "baknum is $c");
 }
+
+
+
+ok_part( "try backup..");
+
+_makefiles();
+
+for my $rel (@files){
+   my $newpath;
+   ok( $newpath = backup($rel),"backed up $rel" );
+   ok( $newpath=~/backup/ , "newpath contains 'backup'");
+   print STDERRR " = $newpath\n";
+   ok( -f $rel, "Still there: $rel");
+
+}
+
+_makefiles();
+
+for my $rel (@files){
+   my $newpath;
+   ok( $newpath = backup($rel),"backe up $rel" );
+   ok( $newpath=~/\.(\d+)$/,'newpath has a .digit') ;
+   my $c = $1;
+   ok( defined $c, "baknum is $c");
+}
+
 
 
 

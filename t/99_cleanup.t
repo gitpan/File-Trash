@@ -8,6 +8,7 @@ $cwd = cwd();
 use File::Path;
 
 File::Path::rmtree('./t/trash');
+File::Path::rmtree('./t/backup');
 ok 1;
 
 

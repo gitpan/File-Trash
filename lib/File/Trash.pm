@@ -1,40 +1,63 @@
 package File::Trash;
 use strict;
-use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS @ISA $DEBUG $ABS_TRASH);
+use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS @ISA $DEBUG $ABS_TRASH $ABS_BACKUP);
 use Exporter;
 use Carp;
 use File::Copy;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.1.1 $ =~ /(\d+)/g;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)/g;
 @ISA = qw/Exporter/;
-@EXPORT_OK = qw(trash);
+@EXPORT_OK = qw(trash backup);
 %EXPORT_TAGS = ( all => \@EXPORT_OK );
 use File::Path;
 use Carp;
 sub debug { $DEBUG and print STDERR __PACKAGE__.", @_\n"; 1 }
 
 $ABS_TRASH = '/tmp/trash';
+$ABS_BACKUP = '/tmp/backup';
+
 
 sub trash {
    @_ or carp("no arguments provided") and return;
    my $count = scalar @_;
    $count or carp("no arguments provided") and return;
 
-   $count == 1 and return _trash($_[0]);
    
+   if ( $count == 1 ){
+      return _backup($_[0], 1);
+   }
+
+
    my $_count = 0;
    for (@_){
-      _trash($_) or next;
-
-      $_count++;
+      _backup($_, 1) and $_count++; 
    }
 
    $_count == $count or carp("Deleted $_count/$count files.");
-
    $_count;
 }
 
 
-sub _trash {   
+
+sub backup {
+   @_ or carp("no arguments provided") and return;
+   my $count = scalar @_;
+   $count or carp("no arguments provided") and return;
+
+   if ( $count == 1 ){
+      return _backup($_[0]);
+   }
+
+   my $_count = 0;
+   for (@_){
+      _backup($_) and $_count++;
+   }
+
+   $_count == $count or carp("Backed up $_count/$count files.");
+   $_count;
+}
+
+
+sub _backup {   
    my $abs_path = Cwd::abs_path($_[0]) 
          or carp("Can't resolve with Cwd::abs_path : '$_[0]'")
          and return;
@@ -42,23 +65,31 @@ sub _trash {
          or carp("Not a file on disk : '$abs_path'")
          and return;
 
-   my $abs_trashed = "$ABS_TRASH$abs_path";
-   $abs_trashed =~/^(\/.+)\/[^\/]+$/ 
-      or confess("Error with '$abs_trashed' matching into");
+   my $is_trash = $_[1]; # if true, we delete original after, and we use abs trash instead
+
+
+   my $abs_to = $is_trash ? "$ABS_TRASH$abs_path" : "$ABS_BACKUP$abs_path";
+
+   $abs_to =~/^(\/.+)\/[^\/]+$/ 
+      or confess("Error with '$abs_to' matching into");
    _abs_dir_assure($1);
 
    my $backnum;
    no warnings;
-   while( -e $abs_trashed ){
-      $abs_trashed=~s/\.\d+$//;
-      $abs_trashed.='.'.$backnum++;
+   while( -e $abs_to ){
+      $abs_to=~s/\.\d+$//;
+      $abs_to.='.'.$backnum++;
    }
 
 
-   File::Copy::move($abs_path, $abs_trashed) 
-      or confess("cant File::Copy::move($abs_path, $abs_trashed) , $!");
-   debug("moved '$abs_path' to '$abs_trashed'");
-   $abs_trashed;
+   File::Copy::copy($abs_path, $abs_to) 
+      or confess("cant File::Copy::copy($abs_path, $abs_to) , $!");
+
+   debug("moved '$abs_path' to '$abs_to'");
+
+   unlink $abs_path if $is_trash;
+
+   $abs_to;
 }
 
 
@@ -118,6 +149,9 @@ If you want, you can set the dir to be something else..
 
    $File::Trash::ABS_TRASH = $ENV{HOME}/.trash
 
+This is the same for default abs backup dir.
+
+
 =head1 API
 
 No subs are exported by default.
@@ -134,9 +168,18 @@ Returns undef in failure, check errors in $File::Trash::errstr.
 If the trash destination exists, the file is appended with a dot digit number.
 So, this really makes sure you don't lose junk.
 
+=head2 backup()
+
+Same as trash(), but does not move the file, copies it instead.
+
+
 =head2 $File::Trash::ABS_TRASH
 
 Default is /tmp/trash
+
+=head2 $File::Trash::ABS_BACKUP
+
+Default is /tmp/backup
 
 =head2 $File::Trash::DEBUG
 

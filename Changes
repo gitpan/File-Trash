@@ -1,0 +1,11 @@
+2008-12-28 19:52  cvs
+
+	* lib/File/Trash.pm, t/00.t, t/99_cleanup.t: added a backup()
+	  feature
+
+2008-12-28 18:56  cvs
+
+	* File-Trash-1.01.tar.gz, MANIFEST, Makefile, Makefile.PL,
+	  bin/trash, lib/File/Trash.pm, t/00.t, t/99_cleanup.t: Initial
+	  revision
+

@@ -6,7 +6,7 @@ WriteMakefile(
    
    LICENSE => 'perl',
 
-   # gen /usr/bin/pmused by Sun Dec 28 18:42:33 EST 2008 
+   # gen /usr/bin/pmused by Sun Dec 28 19:41:11 EST 2008 
    PREREQ_PM => {
       'Carp'                              => '1',
       'Cwd'                               => '3',
