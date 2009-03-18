@@ -7,7 +7,11 @@ $cwd = cwd();
 
 use File::Path;
 
+system('rm -f ./t/*.tmp');
+
 File::Path::rmtree('./t/trash');
+File::Path::rmtree('./t/fileshere');
+
 File::Path::rmtree('./t/backup');
 ok 1;
 

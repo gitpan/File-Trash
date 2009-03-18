@@ -1,3 +1,18 @@
+2009-03-16 10:29  cvs
+
+	* bin/trash: made nicer stats for bin/trash
+
+2009-03-13 17:39  cvs
+
+	* bin/trash, lib/File/Trash.pm: added restore option to bin/trash
+	  added a restore() precedure, that tries to restore to original
+	  place from a trash file
+
+2009-03-13 17:14  cvs
+
+	* lib/File/Trash.pm, t/01_untrash.t, t/99_cleanup.t: added
+	  restore() sub to put back where it was
+
 2008-12-28 19:52  cvs
 
 	* lib/File/Trash.pm, t/00.t, t/99_cleanup.t: added a backup()

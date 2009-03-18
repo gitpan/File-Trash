@@ -4,22 +4,23 @@ WriteMakefile(
    NAME => 'File::Trash',
    VERSION_FROM => 'lib/File/Trash.pm',
    
-   LICENSE => 'perl',
 
-   # gen /usr/bin/pmused by Sun Dec 28 19:41:11 EST 2008 
+   # gen /usr/bin/pmused by Wed Mar 18 15:49:33 EDT 2009 
    PREREQ_PM => {
       'Carp'                              => '1',
       'Cwd'                               => '3',
       'Exporter'                          => '5',
       'File::Copy'                        => '2.09',
-      'File::Path'                        => '1.08',
+      'File::Path'                        => '2.07',
       'Getopt::Std::Strict'               => '1.01',
-      'LEOCHARRE::DEBUG'                  => '1.11',
-      'LEOCHARRE::Dir'                    => '1.06',
       'Test::Simple'                      => '0',
    },
 
-
+   
+   LICENSE => 'perl',
+   
+   
+   
    EXE_FILES => [qw(bin/trash)],
 );
 

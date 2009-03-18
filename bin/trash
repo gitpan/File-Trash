@@ -1,20 +1,56 @@
 #!/usr/bin/perl
 use strict;
-use vars qw($VERSION);
-use Getopt::Std::Strict 'dhv';
-use LEOCHARRE::Dir ':all';
-use LEOCHARRE::DEBUG;
+use Getopt::Std::Strict 'dhvrs';
 use Cwd;
 use Carp;
-use lib './lib';
 use File::Trash;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.1.1 $ =~ /(\d+)/g;
+our $VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)/g;
 
-init();
+INIT {
+   $opt_h and print usage() and exit;
+   $opt_v and print $VERSION and exit;
+}
 
-for (@ARGV){
-   my $trashed = File::Trash::trash($_);
-   debug("trashed $_ to $trashed");
+$opt_s and stats() and exit;
+
+
+sub stats { 
+
+   -d $File::Trash::ABS_TRASH or warn("No trash.\n") and return;
+   # how many
+   my $c = `find '$File::Trash::ABS_TRASH' -type f | wc -l`;
+   chomp $c;
+
+   # size? 
+   my $z = `du -hs '$File::Trash::ABS_TRASH'`;
+   chomp $z;
+
+   printf "ABS TRASH: %s, Files: %s, Size %s\n",
+   $File::Trash::ABS_TRASH, $c, $z;
+
+   
+   1;
+}
+   
+
+for my $arg(@ARGV){
+   
+   my $to;
+   
+   if ($opt_r){
+      $to = File::Trash::restore($arg)
+      or warn("Could not restore '$arg': $File::Trash::errstr\n")
+      and next;
+   }
+   
+   else {
+      $to = File::Trash::trash($arg)
+      or warn("Could not trash '$arg': $File::Trash::errstr\n")
+      and next;
+   }
+      
+   $opt_d and print STDERR "$to\n";
+   #debug("trashed $arg to $to");
 }
 
 
@@ -24,29 +60,64 @@ exit;
 
 
 sub usage {
-   qq{$0 - send files to trash
+   q{trash [OPTION]... PATH...
+Send to trash, restore from trash.
 
-OPTIONS
+   -d       debug on
+   -h       help
+   -v       version
+   -r       restore (file must be in trash dir)
+   -s       stats, how many files in trash, etc
+
+See 'man trash' for more info.
+}}
+
+__END__
+
+=pod
+
+=head1 NAME
+
+trash - send files to trash and restore from trash
+
+=head1 OPTIONS
 
    -d       debug on
    -h       help
    -v       version and exit
+   -r       restore (file must be in trash dir)
+   -s       stats, how many files in trash, etc
 
+=head1 EXAMPLE USAGE
 
-AUTHOR
+To trash..
+
+   trash ~/badfile.txt
+
+Restore..
+
+   trash -r /tmp/trash/home/myself/badfile.txt
+
+=head1 SEE ALSO
+
+L<File::Trash> - parent package.
+
+=head1 AUTHOR
 
 Leo Charre leocharre at cpan dot org
 
-SEE ALSO
-File::Trash  - parent package.
+=head1 LICENSE
 
-}}
+This package is free software; you can redistribute it and/or modify it under the same terms as Perl itself, i.e., under the terms of the "Artistic License" or the "GNU General Public License".
 
-sub init {
-   $::DEBUG = 1 if $opt_d;
-   $opt_h and print usage() and exit;
-   $opt_v and print $VERSION and exit;
+=head1 DISCLAIMER
 
-}
+This package is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the "GNU General Public License" for more details.
+
+=cut
+
+
 
 

@@ -1,12 +1,12 @@
 package File::Trash;
 use strict;
-use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS @ISA $DEBUG $ABS_TRASH $ABS_BACKUP);
+use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS @ISA $DEBUG $ABS_TRASH $ABS_BACKUP $errstr);
 use Exporter;
 use Carp;
 use File::Copy;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)/g;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)/g;
 @ISA = qw/Exporter/;
-@EXPORT_OK = qw(trash backup);
+@EXPORT_OK = qw(trash backup restore);
 %EXPORT_TAGS = ( all => \@EXPORT_OK );
 use File::Path;
 use Carp;
@@ -17,9 +17,13 @@ $ABS_BACKUP = '/tmp/backup';
 
 
 sub trash {
-   @_ or carp("no arguments provided") and return;
+   @_ 
+      or carp("no arguments provided") 
+      and return;
    my $count = scalar @_;
-   $count or carp("no arguments provided") and return;
+   $count 
+      or carp("no arguments provided") 
+      and return;
 
    
    if ( $count == 1 ){
@@ -32,16 +36,44 @@ sub trash {
       _backup($_, 1) and $_count++; 
    }
 
-   $_count == $count or carp("Deleted $_count/$count files.");
+   $_count == $count 
+      or $errstr = "Deleted $_count/$count files.";
+   $_count;
+}
+
+sub restore {
+   @_ 
+      or carp("no arguments provided") 
+      and return;
+   my $count = scalar @_;
+   $count 
+      or carp("no arguments provided")
+      and return;
+
+   
+   if ( $count == 1 ){
+      return _restore($_[0]);
+   }
+
+   my $_count = 0;
+   for (@_){
+      _restore($_) and $_count++; 
+   }
+
+   $_count == $count 
+      or $errstr = "Restored $_count/$count files.";
    $_count;
 }
 
 
-
 sub backup {
-   @_ or carp("no arguments provided") and return;
+   @_ 
+      or carp("no arguments provided") 
+      and return;
    my $count = scalar @_;
-   $count or carp("no arguments provided") and return;
+   $count 
+      or carp("no arguments provided") 
+      and return;
 
    if ( $count == 1 ){
       return _backup($_[0]);
@@ -52,7 +84,8 @@ sub backup {
       _backup($_) and $_count++;
    }
 
-   $_count == $count or carp("Backed up $_count/$count files.");
+   $_count == $count 
+      or carp("Backed up $_count/$count files.");
    $_count;
 }
 
@@ -92,7 +125,39 @@ sub _backup {
    $abs_to;
 }
 
+sub _restore {
+   my $abs_path = Cwd::abs_path($_[0]) 
+         or $errstr = "Can't resolve with Cwd::abs_path : '$_[0]'"
+         and return;
+      -f $abs_path
+         or $errstr = "Not a file on disk : '$abs_path'"
+         and return;
 
+   my $abs_to = $abs_path;
+   $abs_to=~s/$ABS_TRASH//
+      or $errstr = "$abs_path not in $ABS_TRASH?"
+      and return;
+
+   -e $abs_to 
+      and $errstr = "Restore to already exists: $abs_to, cannot restore."
+      and return;
+
+   unless( $abs_to =~/^(\/.+)\/[^\/]+$/ ){
+      warn("Error with '$abs_to' matching into, getting abs loc");
+      return;
+   }
+   
+      
+   _abs_dir_assure($1);
+  
+
+   File::Copy::move($abs_path, $abs_to) 
+      or $errstr = "cant File::Copy::move($abs_path, $abs_to) , $!"
+      and return;
+
+   debug("moved '$abs_path' to '$abs_to'");
+   $abs_to;
+}
    
 
 
@@ -122,10 +187,14 @@ File::Trash - safe file delete
 
 =head1 SYNOPSIS
 
-   use File::Trash 'trash';
+   use File::Trash qw/trash restore/;
 
    my $trashed_path = trash('~/this_is_boring.txt');
    # returns '/tmp/trash/home/username/this_is_boring.txt'
+   
+   restore($trashed_path) 
+      or die($File::Trash::errstr);
+   
 
    my $abs_trash = $File::Trash::ABS_TRASH;
    # returns '/tmp/trash' by default
@@ -172,6 +241,17 @@ So, this really makes sure you don't lose junk.
 
 Same as trash(), but does not move the file, copies it instead.
 
+=head2 restore()
+
+Argument is abs path to file in trash.
+Attempts to move back to where it was originally.
+If the restore to destination exists, will not do it and return false.
+If you provide one argument, returns destination it restored.
+If you provide an array, returns number of files restored.
+
+   restore('/home/myself/.trash/hi.txt') 
+      or die($File::Trash::errstr);
+
 
 =head2 $File::Trash::ABS_TRASH
 
@@ -184,6 +264,10 @@ Default is /tmp/backup
 =head2 $File::Trash::DEBUG
 
 Set to true to see some debug info.
+
+=head2 $File::Trash::errstr
+
+May hold error string.
 
 =head1 CAVEATS
 
