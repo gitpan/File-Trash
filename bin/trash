@@ -1,22 +1,66 @@
 #!/usr/bin/perl
 use strict;
-use Getopt::Std::Strict 'dhvrs';
+use Getopt::Std::Strict 'dhvrsqe';
 use Cwd;
 use Carp;
 use File::Trash;
-our $VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)/g;
+our $VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)/g;
 
-INIT {
-   $opt_h and print usage() and exit;
-   $opt_v and print $VERSION and exit;
+
+
+$opt_h and print usage() and exit;
+$opt_v and print $VERSION and exit;
+$opt_d and $opt_q = 0;
+
+
+
+sub say { $opt_q and return 1; print STDERR "@_" }
+
+if( $opt_e ){
+   system('rm','-rf',$File::Trash::ABS_TRASH);
+   debug("Emptied $File::Trash::ABS_TRASH");
+   exit;
 }
 
-$opt_s and stats() and exit;
+if ( $opt_s ){
+   stats();
+   exit;
+}
+
+sub debug { $opt_d or return 1; warn "@_" }
+
+
+scalar @ARGV or die("Missing arguments.\n");
+
+for my $arg(@ARGV){
+   
+   my $to;
+   
+   if ($opt_r){
+      $to = File::Trash::restore($arg)
+      or say("Could not restore '$arg': $File::Trash::errstr\n")
+      and next;
+   }
+   
+   else {
+      $to = File::Trash::trash($arg)
+      or say("Could not trash '$arg': $File::Trash::errstr\n")
+      and next;
+   }
+      
+   say("$to\n");
+}
+
+
+
+
+
+exit;
 
 
 sub stats { 
 
-   -d $File::Trash::ABS_TRASH or warn("No trash.\n") and return;
+   -d $File::Trash::ABS_TRASH or say("No trash '$File::Trash::ABS_TRASH'.\n") and return;
    # how many
    my $c = `find '$File::Trash::ABS_TRASH' -type f | wc -l`;
    chomp $c;
@@ -33,29 +77,6 @@ sub stats {
 }
    
 
-for my $arg(@ARGV){
-   
-   my $to;
-   
-   if ($opt_r){
-      $to = File::Trash::restore($arg)
-      or warn("Could not restore '$arg': $File::Trash::errstr\n")
-      and next;
-   }
-   
-   else {
-      $to = File::Trash::trash($arg)
-      or warn("Could not trash '$arg': $File::Trash::errstr\n")
-      and next;
-   }
-      
-   $opt_d and print STDERR "$to\n";
-   #debug("trashed $arg to $to");
-}
-
-
-
-exit;
 
 
 
@@ -67,7 +88,9 @@ Send to trash, restore from trash.
    -h       help
    -v       version
    -r       restore (file must be in trash dir)
+   -e       empty trash
    -s       stats, how many files in trash, etc
+   -q       quiet
 
 See 'man trash' for more info.
 }}
@@ -86,7 +109,9 @@ trash - send files to trash and restore from trash
    -h       help
    -v       version and exit
    -r       restore (file must be in trash dir)
+   -e       empty trash
    -s       stats, how many files in trash, etc
+   -q       quiet
 
 =head1 EXAMPLE USAGE
 

@@ -4,7 +4,7 @@ use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS @ISA $DEBUG $ABS_TRASH $ABS_BACKUP 
 use Exporter;
 use Carp;
 use File::Copy;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)/g;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)/g;
 @ISA = qw/Exporter/;
 @EXPORT_OK = qw(trash backup restore);
 %EXPORT_TAGS = ( all => \@EXPORT_OK );
@@ -18,11 +18,12 @@ $ABS_BACKUP = '/tmp/backup';
 
 sub trash {
    @_ 
-      or carp("no arguments provided") 
+      or Carp::cluck("no arguments provided") 
       and return;
+
    my $count = scalar @_;
    $count 
-      or carp("no arguments provided") 
+      or Carp::cluck("no arguments provided") 
       and return;
 
    
@@ -43,11 +44,12 @@ sub trash {
 
 sub restore {
    @_ 
-      or carp("no arguments provided") 
+      or Carp::cluck("no arguments provided") 
       and return;
+
    my $count = scalar @_;
    $count 
-      or carp("no arguments provided")
+      or Carp::cluck("no arguments provided")
       and return;
 
    
@@ -68,11 +70,11 @@ sub restore {
 
 sub backup {
    @_ 
-      or carp("no arguments provided") 
+      or Carp::cluck("no arguments provided") 
       and return;
    my $count = scalar @_;
    $count 
-      or carp("no arguments provided") 
+      or Carp::cluck("no arguments provided") 
       and return;
 
    if ( $count == 1 ){
@@ -85,17 +87,18 @@ sub backup {
    }
 
    $_count == $count 
-      or carp("Backed up $_count/$count files.");
+      or Carp::cluck("Backed up $_count/$count files.");
    $_count;
 }
 
 
 sub _backup {   
    my $abs_path = Cwd::abs_path($_[0]) 
-         or carp("Can't resolve with Cwd::abs_path : '$_[0]'")
+         or Carp::cluck("Can't resolve with Cwd::abs_path : '$_[0]'")
          and return;
-      -f $abs_path
-         or carp("Not a file on disk : '$abs_path'")
+
+   -f $abs_path
+         or Carp::cluck("Not a file on disk : '$abs_path'")
          and return;
 
    my $is_trash = $_[1]; # if true, we delete original after, and we use abs trash instead
