@@ -4,13 +4,14 @@ use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS @ISA $DEBUG $ABS_TRASH $ABS_BACKUP 
 use Exporter;
 use Carp;
 use File::Copy;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)/g;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)/g;
 @ISA = qw/Exporter/;
 @EXPORT_OK = qw(trash backup restore);
 %EXPORT_TAGS = ( all => \@EXPORT_OK );
 use File::Path;
 use Carp;
 sub debug { $DEBUG and print STDERR __PACKAGE__.", @_\n"; 1 }
+
 
 $ABS_TRASH = '/tmp/trash';
 $ABS_BACKUP = '/tmp/backup';
@@ -141,6 +142,11 @@ sub _restore {
       or $errstr = "$abs_path not in $ABS_TRASH?"
       and return;
 
+   # TAKE OUT .\d version !! 
+   if ($abs_to=~/.+\.\d{1,10}$/){   
+      $abs_to=~s/\.\d+$//;
+   }
+
    -e $abs_to 
       and $errstr = "Restore to already exists: $abs_to, cannot restore."
       and return;
@@ -186,7 +192,7 @@ __END__
 
 =head1 NAME
 
-File::Trash - safe file delete
+File::Trash - move files to trash and restore as well
 
 =head1 SYNOPSIS
 
