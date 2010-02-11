@@ -6,6 +6,7 @@ use vars qw($_part $cwd);
 $cwd = cwd();
 use File::Trash 'trash';
 
+ok_part("these should not work.. that's ok..");
 
 ok ! trash(), 'trash()';
 
@@ -13,7 +14,7 @@ for my $arg ( qw(bogus ./bogusette) ){
    
    ok( ! trash($arg), 'trash()' );
    
-
+   warn "\n\n";
 
 
 

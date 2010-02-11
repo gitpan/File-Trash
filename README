@@ -1,9 +1,12 @@
-File::Trash
+File::Trash - safe file delete
 ===============================================
 
 INSTALLATION
 
-See INSTALL.
+   perl Makefile.PL
+   make test
+   make install
+   make realclean
 
 DEPENDENCIES
 
@@ -17,7 +20,7 @@ DEPENDENCIES
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2008 by Leo Charre leocharre at cpan dot org
+Copyright (C) 2010 by Leo Charre leocharre at cpan dot org
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

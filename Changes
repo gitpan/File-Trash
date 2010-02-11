@@ -1,3 +1,15 @@
+2010-02-10 21:14  cvs
+
+	* lib/File/Trash.pm, t/01_untrash.t, t/02.t: Made trash operation
+	  quicker.  The original trash was using _backup as backend, but
+	  this would always copy, and *then* delete as last step.  There's
+	  no need for that, we can simply use move() operation.
+
+2010-01-30 14:48  cvs
+
+	* bin/trash: made so trash on file not on disk with -q(uiet) flag
+	  will not output to stderr
+
 2009-11-20 20:48  cvs
 
 	* lib/File/Trash.pm: If you send file.png to trash two times, the
@@ -10,17 +22,17 @@
 	  empty trash, also added a -q quiet option Made module use
 	  Carp::cluck instead of carp
 
-2009-03-16 09:29  cvs
+2009-03-16 10:29  cvs
 
 	* bin/trash: made nicer stats for bin/trash
 
-2009-03-13 16:39  cvs
+2009-03-13 17:39  cvs
 
 	* bin/trash, lib/File/Trash.pm: added restore option to bin/trash
 	  added a restore() precedure, that tries to restore to original
 	  place from a trash file
 
-2009-03-13 16:14  cvs
+2009-03-13 17:14  cvs
 
 	* lib/File/Trash.pm, t/01_untrash.t, t/99_cleanup.t: added
 	  restore() sub to put back where it was

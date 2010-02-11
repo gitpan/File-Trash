@@ -3,16 +3,12 @@ use strict;
 use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS @ISA $DEBUG $ABS_TRASH $ABS_BACKUP $errstr);
 use Exporter;
 use Carp;
+use File::Path;
 use File::Copy;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)/g;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)/g;
 @ISA = qw/Exporter/;
 @EXPORT_OK = qw(trash backup restore);
 %EXPORT_TAGS = ( all => \@EXPORT_OK );
-use File::Path;
-use Carp;
-sub debug { $DEBUG and print STDERR __PACKAGE__.", @_\n"; 1 }
-
-
 $ABS_TRASH = '/tmp/trash';
 $ABS_BACKUP = '/tmp/backup';
 
@@ -118,28 +114,34 @@ sub _backup {
       $abs_to.='.'.$backnum++;
    }
 
+   
+   if( $is_trash ){
+      File::Copy::move($abs_path, $abs_to)
+         or confess("can't move '$abs_path' to '$abs_to', $!");
+      $DEBUG and warn("moved '$abs_path' to '$abs_to'");
+   }
+   else {
 
-   File::Copy::copy($abs_path, $abs_to) 
-      or confess("cant File::Copy::copy($abs_path, $abs_to) , $!");
+      File::Copy::copy($abs_path, $abs_to) 
+         or confess("can't copy '$abs_path' to '$abs_to', $!");
 
-   debug("moved '$abs_path' to '$abs_to'");
-
-   unlink $abs_path if $is_trash;
+      $DEBUG and warn("copied '$abs_path' to '$abs_to'");
+   }
 
    $abs_to;
 }
 
 sub _restore {
    my $abs_path = Cwd::abs_path($_[0]) 
-         or $errstr = "Can't resolve with Cwd::abs_path : '$_[0]'"
+         or warn($errstr = "Can't resolve with Cwd::abs_path : '$_[0]'")
          and return;
       -f $abs_path
-         or $errstr = "Not a file on disk : '$abs_path'"
+         or warn($errstr = "Not a file on disk : '$abs_path'")
          and return;
 
    my $abs_to = $abs_path;
    $abs_to=~s/$ABS_TRASH//
-      or $errstr = "$abs_path not in $ABS_TRASH?"
+      or warn($errstr = "$abs_path not in $ABS_TRASH?")
       and return;
 
    # TAKE OUT .\d version !! 
@@ -148,7 +150,7 @@ sub _restore {
    }
 
    -e $abs_to 
-      and $errstr = "Restore to already exists: $abs_to, cannot restore."
+      and warn($errstr = "Restore to already exists: $abs_to, cannot restore.")
       and return;
 
    unless( $abs_to =~/^(\/.+)\/[^\/]+$/ ){
@@ -161,10 +163,10 @@ sub _restore {
   
 
    File::Copy::move($abs_path, $abs_to) 
-      or $errstr = "cant File::Copy::move($abs_path, $abs_to) , $!"
+      or warn( $errstr = "cant File::Copy::move($abs_path, $abs_to) , $!" )
       and return;
 
-   debug("moved '$abs_path' to '$abs_to'");
+   $DEBUG and warn("moved '$abs_path' to '$abs_to'");
    $abs_to;
 }
    

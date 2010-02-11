@@ -42,7 +42,7 @@ for my $rel (@files){
    ok( -f $rel,"now rel -f");   
    ok( ! -f $newpath,"now !-f newpath");
 
-   
+   warn "\n\n";   
    
 }
 
